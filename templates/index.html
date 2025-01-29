@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificação de Emails</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            max-width: 500px;
+            width: 90%;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+            text-align: left;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            display: none;
+            text-align: left;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.3s ease;
+        }
+        .loader {
+            display: none;
+            margin: 10px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007BFF;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Classificação de Emails</h1>
+        <form id="emailForm">
+            <label for="emailText">Cole o texto do email:</label>
+            <textarea id="emailText" rows="4" placeholder="Digite ou cole o conteúdo do email..."></textarea>
+
+            <label for="fileUpload">Ou faça upload de um arquivo (.txt ou .pdf):</label>
+            <input type="file" id="fileUpload" accept=".txt,.pdf">
+
+            <button type="submit">Processar Email</button>
+        </form>
+
+        <div class="loader" id="loader"></div>
+
+        <div class="result" id="result">
+            <h2>Resultado:</h2>
+            <p><strong>Categoria:</strong> <span id="category"></span></p>
+            <p><strong>Resposta Sugerida:</strong></p>
+            <p id="response"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('emailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailText = document.getElementById('emailText');
+            const fileUpload = document.getElementById('fileUpload');
+
+            let text = emailText.value.trim();
+            if (fileUpload.files.length > 0) {
+                const fileText = await fileUpload.files[0].text();
+                text = fileText.trim();
+            }
+
+            if (!text) {
+                alert("Por favor, insira um texto ou selecione um arquivo.");
+                return;
+            }
+
+            document.getElementById('loader').style.display = 'block';
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+            resultDiv.style.opacity = '0';
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                const result = await response.json();
+                
+                document.getElementById('category').textContent = result.category;
+                document.getElementById('response').textContent = result.response;
+
+                resultDiv.style.display = 'block';
+                setTimeout(() => {
+                    resultDiv.style.opacity = '1';
+                    resultDiv.style.transform = 'translateY(0)';
+                }, 100);
+
+                emailText.value = "";
+                fileUpload.value = "";
+            } catch (error) {
+                alert("Erro ao processar o email. Tente novamente.");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

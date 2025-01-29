@@ -4,23 +4,19 @@ import os
 
 app = Flask(__name__)
 
-# Configuração da API do Gemini
-GEMINI_API_KEY = "AIzaSyAjhxxKSjD2JJ5Ewim4es79XEo1qmH0who"  # Substitua pela sua chave correta
+GEMINI_API_KEY = "AIzaSyAjhxxKSjD2JJ5Ewim4es79XEo1qmH0who"
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Rota principal para servir o index.html
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# Função para classificar o email
 def classify_email(text):
     prompt = f"Classifique o seguinte email como 'Produtivo' ou 'Improdutivo':\n\n{text}\n\nCategoria:"
     model = genai.GenerativeModel("gemini-pro")
     response = model.generate_content(prompt)
     return response.text.strip()
 
-# Função para gerar resposta automática
 def generate_response(category, text):
     if category.lower() == "produtivo":
         prompt = f"Gere uma resposta profissional para o seguinte email:\n\n{text}\n\nResposta:"
@@ -31,16 +27,13 @@ def generate_response(category, text):
     response = model.generate_content(prompt)
     return response.text.strip()
 
-# Rota para processar o email
 @app.route('/process', methods=['POST'])
 def process_email():
     data = request.json
     text = data['text']
 
-    # Classificar o email
     category = classify_email(text)
 
-    # Gerar resposta automática
     response = generate_response(category, text)
 
     return jsonify({
